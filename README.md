@@ -3,7 +3,7 @@
 * Python3.6
 * Selenium
 
-···Python
+ ```Python
 print('###开始登录###')
 self.driver.switch_to_frame('alibaba-login-box')
 self.driver.find_element_by_id('fm-login-id').send_keys(self.uid)
@@ -19,4 +19,4 @@ ActionChains(self.driver).release().perform()
 self.driver.find_element_by_tag_name("button").click()
 print("###登录成功###")
 self.driver.switch_to_default_content()
-···
+ ```
