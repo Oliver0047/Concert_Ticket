@@ -2,7 +2,7 @@
 大麦网演唱会抢票程序
 * Python3.6
 * Selenium
-
+## 代码重点：iframe的定位与滑块的模拟
  ```Python
 print('###开始登录###')
 self.driver.switch_to_frame('alibaba-login-box')
