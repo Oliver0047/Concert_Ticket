@@ -1,2 +1,3 @@
 userID
 userPassword
+nickname
