@@ -222,7 +222,7 @@ class Concert(object):
 
 if __name__ == '__main__':
     try:
-        con=Concert('范玮琪',[1],[1],'上海',1)#具体如果填写请查看类中的初始化函数
+        con=Concert('范玮琪',[1],[1],'上海',1)#具体如何填写请查看类中的初始化函数
         con.enter_concert()
         con.choose_ticket()
         con.check_order()
