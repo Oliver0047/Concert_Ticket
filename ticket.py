@@ -8,6 +8,9 @@ from tkinter import *
 import time
 import pickle
 import os
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 damai_url="https://www.damai.cn/"
 login_url="https://passport.damai.cn/login?ru=https%3A%2F%2Fwww.damai.cn%2F"
@@ -59,7 +62,10 @@ class Concert(object):
         if self.login_method==0:
             self.driver.get(login_url)#载入登录界面
             print('###开始登录###')
-            sleep(1)
+            try:    
+                element = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, 'alibaba-login-box')))
+            except:    
+                print('###定位不到登录框###')
             self.driver.switch_to.frame('alibaba-login-box')#里面这个是iframe的id
             self.driver.find_element_by_id('fm-login-id').send_keys(self.uid)
             self.driver.find_element_by_id('fm-login-password').send_keys(self.upw)
@@ -88,18 +94,23 @@ class Concert(object):
         self.driver=webdriver.Firefox()#默认火狐浏览器
         self.driver.maximize_window()
         self.login()#先登录再说
-        self.driver.refresh()
-        sleep(1)
-        if self.driver.find_element_by_xpath('/html/body/div[2]/div/div[3]/div[1]/a[2]/div').text==self.usr_name:
+        self.driver.refresh()   
+        try:
+            locator = (By.XPATH, "/html/body/div[1]/div/div[3]/div[1]/a[2]/div")
+            element = WebDriverWait(self.driver, 3).until(EC.text_to_be_present_in_element(locator,self.usr_name))
             self.status=1
             print("###登录成功###")
-        else:
+        except:
             self.status=0
-            print("###登录失败###")
+            print("###登录失败###")              
         if self.status==1:
-            self.driver.find_elements_by_xpath('/html/body/div[2]/div/div[4]/input')[0].send_keys(self.name)#搜索栏输入歌星
-            self.driver.find_elements_by_xpath('/html/body/div[2]/div/div[4]/div[1]')[0].click()#点击搜索
-            kinds=self.driver.find_element_by_id('category_filter_id').find_elements_by_tag_name('li')#选择演唱会类别
+            self.driver.find_elements_by_xpath('/html/body/div[1]/div/div[4]/input')[0].send_keys(self.name)#搜索栏输入歌星
+            self.driver.find_elements_by_xpath('/html/body/div[1]/div/div[4]/div[1]')[0].click()#点击搜索
+            try:    
+                element = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, 'category_filter_id')))
+                kinds=element.find_elements_by_tag_name('li')#选择演唱会类别
+            except Exception as e:
+                print(e)
             for k in kinds:
                 if k.text=='演唱会':
                     k.click()
@@ -143,28 +154,32 @@ class Concert(object):
                 if self.num!=1:#如果前一次失败了，那就刷新界面重新开始
                     self.status=2
                     self.driver.get(self.url)
-                datelist=self.driver.find_element_by_id("performList").find_elements_by_tag_name('li')
+                try:    
+                    element = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "performList")))
+                except Exception as e:
+                    print(e)                
+                datelist=element.find_elements_by_tag_name('li')
                 for i in self.date:#根据优先级选择一个可行日期
                     j=datelist[i-1].get_attribute('class')
                     if j=='itm':
                         datelist[i-1].click()
+                        sleep(1)
                         break
                     elif j=='itm itm-sel':
                         break
                     elif j=='itm itm-oos':
-                        continue
-                sleep(1)
+                        continue                
                 pricelist=self.driver.find_element_by_id("priceList").find_elements_by_tag_name('li')#根据优先级选择一个可行票价
                 for i in self.price:
                     j=pricelist[i-1].get_attribute('class')
                     if j=='itm':
                         pricelist[i-1].click()
+                        sleep(2)
                         break
                     elif j=='itm itm-sel':
                         break
                     elif j=='itm itm-oos':
                         continue
-                sleep(1.5)
                 print("###选择演唱会时间与票价###")
                 cart=self.driver.find_element_by_id('cartList')
                 try:#各种按钮的点击
@@ -178,7 +193,10 @@ class Concert(object):
                     cart.find_element_by_class_name('ops').find_element_by_link_text("选座购买").click()
                     self.status=5
                 self.num+=1
-                sleep(0.5)
+                try:
+                    element = WebDriverWait(self.driver, 3).until(EC.title_contains('订单结算'))
+                except:
+                    print('###未跳转到订单结算界面###')                
             time_end=time.time()
             print("###经过%d轮奋斗，共耗时%f秒，抢票成功！请确认订单信息###"%(self.num-1,round(time_end-time_start,3)))
     
@@ -190,8 +208,12 @@ class Concert(object):
             if len(rn_button)==1:#如果要求实名制
                 print('###选择实名制信息###')
                 rn_button[0].click()
-                #选择实名信息
-                tb=self.driver.find_element_by_xpath('/html/body/div[3]/div[3]/div[12]/div')
+                #选择实名信息   
+                try:
+                    tb = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[3]/div[12]/div')))
+                except Exception as e:
+                    print("###实名信息选择框没有显示###")
+                    print(e)
                 lb=tb.find_elements_by_tag_name('label')[self.real_name]#选择第self.real_name个实名者
                 lb.find_elements_by_tag_name('td')[0].click()
                 tb.find_element_by_class_name('one-btn').click()
@@ -202,18 +224,22 @@ class Concert(object):
                 print('###选择购票人信息###')
                 rn_button[0].click()
                 #选择实名信息
-                tb=self.driver.find_element_by_xpath('/html/body/div[3]/div[3]/div[13]/div')
+                try:
+                    tb = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[3]/div[13]/div')))
+                except Exception as e:
+                    print("###实名信息选择框没有显示###")
+                    print(e)                
                 lb=tb.find_elements_by_tag_name('label')[self.real_name]#选择第self.real_name个实名者
                 lb.find_elements_by_tag_name('td')[0].click()
                 tb.find_element_by_class_name('one-btn').click()
             print('###不选择订单优惠###')
             print('###请在付款完成后下载大麦APP进入订单详情页申请开具###')
             self.driver.find_element_by_id('orderConfirmSubmit').click()#同意以上协议并提交订单
-            sleep(8)
-            if self.driver.title.find('支付')!=-1:
+            try:
+                element = WebDriverWait(self.driver, 5).until(EC.title_contains('支付'))
                 self.status=6
                 print('###成功提交订单,请手动支付###')
-            else:
+            except:
                 print('###提交订单失败,请查看问题###')
                         
     def finish(self):
@@ -222,7 +248,7 @@ class Concert(object):
 
 if __name__ == '__main__':
     try:
-        con=Concert('范玮琪',[1],[1],'上海',1)#具体如何填写请查看类中的初始化函数
+        con=Concert('张杰',[1],[2],'上海',1)#具体如果填写请查看类中的初始化函数
         con.enter_concert()
         con.choose_ticket()
         con.check_order()
